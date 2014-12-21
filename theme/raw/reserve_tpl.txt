@@ -1,0 +1,24 @@
+	<tr>
+			<td colspan="3"><i>{$componentr->help|clean_html|safe}</i></td>    
+            <td class="buttonscell btns2 booksetcontrols">
+                <a href="{$WWWROOT}artefact/bookset/select/index.php?id={$componentr->id}" title="{str tag=edit}">
+                    <img src="{theme_url filename='images/btn_check.png'}" alt="{str(tag=editspecific arg1=$componentr->title)|escape:html|safe}">
+                </a>
+                <a href="{$WWWROOT}artefact/bookset/delete/component.php?id={$componentr->id}" title="{str tag=delete}">
+                    <img src="{theme_url filename='images/btn_deleteremove.png'}" alt="{str(tag=deletespecific arg1=$componentr->title)|escape:html|safe}">
+                </a>
+            </td>		
+	</tr>
+	
+	                <a href="{$WWWROOT}artefact/bookset/valide/index.php?id={$bookset->id}" title="{str tag=validate section=artefact.bookset}" >
+                    <img src="{$iconcheckpath}" alt="{str(tag=validatespecific section=artefact.bookset arg1=$bookset->title)|escape:html|safe}"></a>
+
+<td>
+              <a href="{$WWWROOT}artefact/checklist/valide/index.php?id={$checklist}" title="{str tag=validate section=artefact.checklist}" >
+                    <img src="{$iconcheckpath}" alt="{str(tag=validatespecific section=artefact.checklist arg1=$artefacttitle)|escape:html|safe}"></a>
+</td>
+
+<td>
+              <a href="{$WWWROOT}artefact/bookset/valide/index.php?id={$bookset}" title="{str tag=validate section=artefact.bookset}" >
+                    <img src="{$iconcheckpath}" alt="{str(tag=validatespecific section=artefact.bookset arg1=$artefacttitle)|escape:html|safe}"></a>
+</td>
