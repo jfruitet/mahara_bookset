@@ -84,6 +84,7 @@ class PluginArtefactBookset extends PluginArtefact {
 
 	*/
     public static function submenu_items() {
+		global $USER;
         $tabs = array();
         $tabs['index'] = array(
                 'page'  => 'index',
@@ -103,27 +104,33 @@ class PluginArtefactBookset extends PluginArtefact {
 				//print_object($booksets);
 				//exit;
 			if (!empty($booksets['data'])){
+				//DEBUG
+				//echo "<br />DEBUG :: lib.php :: 103 :: BOOKSET<br />\n";
+				//print_object($booksets['data']);
+				//exit;
+
         		foreach ($booksets['data'] as $bookset){
 					// DEBUG
 					//echo "<br />DEBUG :: lib.php :: 103 :: BOOKSET<br />\n";
 					//print_object($bookset);
 					//exit;
-					if ($components = ArtefactTypeBookset::get_bookset_components_info($bookset->id)){
+					if ($bookset->select && ($components = ArtefactTypeBookset::get_bookset_components_info($bookset->id))){
 						// DEBUG
 						//echo "<br />DEBUG :: lib.php :: 103 :: BOOKSET<br />\n";
 						//print_object($components);
-
 
 						foreach ($components as $component){
 							//DEBUG
 							//echo "<br />DEBUG :: lib.php :: 103 :: BOOKSET<br />\n";
 							//print_object($component);
-							$index = $component->tomeid;
-                        	$tabs[$index] = array(
-			                	'page'  => 'import',
-            			    	'url'   => 'artefact/bookset/dispatch.php?id='.$component->tomeid,
-			                	'title' => strip_tags($bookset->title.'::'.$component->title),
-            				);
+							if ($component->public || ($component->owner == $USER->get('id'))){
+								$index = $component->tomeid;
+                        		$tabs[$index] = array(
+			                		'page'  => 'import',
+            			    		'url'   => 'artefact/bookset/dispatch.php?id='.$component->tomeid,
+			                		'title' => strip_tags($bookset->title.'::'.$component->title),
+            					);
+							}
 						}
 					}
 				}
@@ -194,6 +201,7 @@ class ArtefactTypeBookset extends ArtefactType {
  	// nouvelles proprietes par rapport a la classe artefact standart
 	protected $status = 0;
     protected $public = 0;
+    protected $select = 0;
 	
     public function __construct($id = 0, $data = null) {
 
@@ -261,6 +269,18 @@ class ArtefactTypeBookset extends ArtefactType {
 	}
 
 
+    /**
+     * Returns a URL for an icon for the appropriate artefact
+     *
+     * @return string URL for the icon
+     */
+	public static function get_icon_showpath($options=null) {
+        global $THEME;
+        return $THEME->get_url('images/btn_show.png', false, 'artefact/bookset');
+	}
+
+
+
 
     /**
      * This method extends ArtefactType::commit() by adding additional data
@@ -287,6 +307,7 @@ class ArtefactTypeBookset extends ArtefactType {
    			'artefact'  	=> $this->get('id'),
             'status' 	=> $this->get('status'),
             'public' 		=> $this->get('public'),
+            'select' 		=> $this->get('select'),
         );
 		// DEBUG
 		// print_object($data);
@@ -387,7 +408,7 @@ class ArtefactTypeBookset extends ArtefactType {
         global $USER;
 		if (!empty($public)){
 			($booksets = get_records_sql_array("
-							SELECT a.* , ac.status
+							SELECT a.*, ac.status, ac.public, ac.select
 							FROM {artefact} a
             				JOIN {artefact_bookset} ac ON ac.artefact = a.id
                             WHERE ac.public = ? AND a.artefacttype = 'bookset'
@@ -402,7 +423,7 @@ class ArtefactTypeBookset extends ArtefactType {
 		}
         else{
 			($booksets = get_records_sql_array("
-							SELECT a.* , ac.status
+							SELECT a.*, ac.status, ac.public, ac.select
 							FROM {artefact} a
             				JOIN {artefact_bookset} ac ON ac.artefact = a.id
                             WHERE a.owner = ? AND a.artefacttype = 'bookset'
@@ -410,11 +431,6 @@ class ArtefactTypeBookset extends ArtefactType {
                             || ($booksets = array());
 			$count = count_records('artefact', 'owner', $USER->get('id'), 'artefacttype', 'bookset');
 		}
-
-        foreach ($booksets as &$bookset) {
-            $bookset->description = '<p>' . preg_replace('/\n\n/','</p><p>', $bookset->description) . '</p>';
-            $bookset->status = '<p><i>' . preg_replace('/\n\n/','</i></p><p><i>', $bookset->status) . '</i></p>';
-        }
 
 		$result = array(
             'count'  =>  $count,
@@ -477,6 +493,20 @@ class ArtefactTypeBookset extends ArtefactType {
                 'title' => get_string('publiclist', 'artefact.bookset'),
                 'description' => get_string('publiclistdesc','artefact.bookset'),
             ),
+            'select' => array(
+                'type'  => 'radio',
+            	'options' => array(
+                	0 => get_string('no'),
+                	1 => get_string('yes'),
+            	),
+            	'defaultvalue' => 0,
+            	'rules' => array(
+                	'required' => true
+            	),
+            	'separator' => ' &nbsp; ',
+                'title' => get_string('selectthisbookset', 'artefact.bookset'),
+                'description' => get_string('selectthisbooksetdesc','artefact.bookset'),
+            ),
 
         );
 
@@ -508,9 +538,22 @@ class ArtefactTypeBookset extends ArtefactType {
      * @param booksets (reference)
      */
     public static function build_booksets_list_html(&$booksets) {
-        $smarty = smarty_core();
+ 		//print_object($booksets);
+		//exit;
+        $recs=&$booksets['data'];
+        //print_object($recs);
+		//exit;
+		foreach($recs as $bookset) {
+            $bookset->description =  strip_tags($bookset->description,'<a>');
+            $bookset->status = ($bookset->status ? get_string('allowed','artefact.bookset') : get_string('forbidden','artefact.bookset'));
+            $bookset->public = ($bookset->public ? get_string('yes') : get_string('no'));
+            $bookset->select = ($bookset->select ? get_string('yes') : get_string('no'));
+		}
+
+		$smarty = smarty_core();
         $smarty->assign_by_ref('booksets', $booksets);
 		$smarty->assign('iconcheckpath', ArtefactTypeBookset::get_icon_checkpath());
+        $smarty->assign('iconshowpath', ArtefactTypeBookset::get_icon_showpath());
 
         $booksets['tablerows'] = $smarty->fetch('artefact:bookset:booksetlist.tpl');
         $pagination = build_pagination(array(
@@ -566,6 +609,7 @@ class ArtefactTypeBookset extends ArtefactType {
         $artefact->set('description', $values['description']);
         $artefact->set('status', $values['status']);
         $artefact->set('public', $values['public']);
+        $artefact->set('select', $values['select']);
 
         if (get_config('licensemetadata')) {
             $artefact->set('license', $values['license']);
@@ -603,7 +647,7 @@ class ArtefactTypeBookset extends ArtefactType {
         $booksetform = array(
             'name' => empty($bookset) ? 'addbookset' : 'editbookset',
             'plugintype' => 'artefact',
-            'pluginname' => 'component',
+            'pluginname' => 'bookset',
             'validatecallback' => array(generate_artefact_class_name('bookset'),'validate'),
             'successcallback' => array(generate_artefact_class_name('bookset'),'submit'),
             'elements' => $elements,
@@ -612,10 +656,93 @@ class ArtefactTypeBookset extends ArtefactType {
         return pieform($booksetform);
     }
 
-	/******************  Select Booklet ******************************************************************/
     /**
     * Gets the new/edit bookset pieform
-	* select some artefact_component from artefact_component
+    *
+    */
+    public static function get_form_select($bookset=null) {
+    	global $USER;
+		require_once(get_config('libroot') . 'pieforms/pieform.php');
+        require_once('license.php');
+        if (!empty($bookset)){
+			//echo "<br />lib.php :: 639 :: BOOKSET<br />\n";
+			//print_object($bookset);
+			//exit;
+  			// DEBUG
+			//echo "<br />lib.php :: 644 :: SELECT : '$select' <br />\n";
+            $elements = array(
+				'html' => array(
+					'type' => 'html',
+					'value' => $bookset->title,
+				),
+				'booksetid' => array(
+					'type' => 'hidden',
+					'value' => $bookset->id,
+				),
+			);
+
+			$elements['select'] = array(
+                'type'  => 'radio',
+            	'options' => array(
+                	0 => get_string('no'),
+                	1 => get_string('yes'),
+            	),
+               	'defaultvalue' => $bookset->select,
+                'separator' => ' &nbsp; ',
+	           	'title' => get_string('selectthisbookset', 'artefact.bookset'),
+   		       	'description' => get_string('selectthisbooksetdesc', 'artefact.bookset'),  // hint / help information
+			);
+
+			$elements['submit'] = array(
+            	'type' => 'submitcancel',
+	            'value' => array(get_string('selectbookset','artefact.bookset'), get_string('cancel')),
+    	        'goto' => get_config('wwwroot') . 'artefact/bookset/index.php',
+        	);
+	        $booksetform = array(
+    	        'name' => empty($bookset) ? 'addbookset' : 'selectbookset',
+        	    'plugintype' => 'artefact',
+            	'pluginname' => 'bookset',
+	            'validatecallback' => array(generate_artefact_class_name('bookset'),'validate'),
+    	        'successcallback' => array(generate_artefact_class_name('bookset'),'submit_selectbookset'),
+        	    'elements' => $elements,
+        	);
+            //echo "<br />lib.php :: 665 :: BOOKSETFORM<br />\n";
+			//print_object($booksetform);
+			//exit;
+
+    	    return pieform($booksetform);
+		}
+		return null;
+    }
+
+	/**
+	 *   set this bookset as default bookset
+	 *
+	 */
+
+    public static function submit_selectbookset(Pieform $form, $values) {
+        global $USER, $SESSION;
+        if (!empty($values['booksetid'])) {
+            $id = (int) $values['booksetid'];
+
+            $select = 0;
+			if (!empty($values['select'])){
+				$select = (int) $values['select'];
+			}
+			if (!empty($values['booksetid'])){
+    	        set_field('artefact_bookset', 'select', $select, 'artefact', $id);
+			}
+
+			$SESSION->add_ok_msg(get_string('booksetselectedsuccessfully', 'artefact.bookset'));
+            redirect('/artefact/bookset/index.php?id='.$id);
+		}
+        redirect('/artefact/bookset/index.php');
+    }
+
+	/******************  Select booklet assoiated to Bookset ******************************************************************/
+    /**
+    * Gets the new/edit bookset pieform
+	* select some artefact_booklet_component
     *
     */
     public static function get_form_componentselect($bookset=null, $components=null) {
@@ -699,7 +826,7 @@ class ArtefactTypeBookset extends ArtefactType {
         $elements['submit'] = array(
             'type' => 'submitcancel',
             'value' => array(get_string('savebookset','artefact.bookset'), get_string('cancel')),
-            'goto' => get_config('wwwroot') . 'artefact/bookset/bookset.php',
+            'goto' => get_config('wwwroot') . 'artefact/bookset/bookset.php?id='.$bookset->id,
         );
         $form = array(
             'name' => empty($bookset) ? 'addbookset' : 'editbookset',
@@ -737,6 +864,10 @@ class ArtefactTypeBookset extends ArtefactType {
 				'public' => array(
 					'type' => 'hidden',
 					'value' => $bookset->public,
+				),
+				'select' => array(
+					'type' => 'hidden',
+					'value' => $bookset->select,
 				),
 				'booksetid' => array(
 					'type' => 'hidden',
@@ -783,6 +914,7 @@ class ArtefactTypeBookset extends ArtefactType {
         $artefact->set('description', $values['description']);
         $artefact->set('status', $values['status']);
         $artefact->set('public', $values['public']);
+        $artefact->set('select', $values['select']);
 
         if (get_config('licensemetadata')) {
             $artefact->set('license', $values['license']);

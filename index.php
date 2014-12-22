@@ -154,6 +154,7 @@ if (!empty($indexform)) {
 }
 
 $smarty->assign_by_ref('booksets', $booksets);
+//$smarty->assign('iconcheckpath', ArtefactTypeBookset::get_icon_checkpath());
 if ($limit<$booksets['count']){
 	$smarty->assign('urlalllists', '<a href="' . get_config('wwwroot') . 'artefact/bookset/index.php?public=0&amp;offset=0&amp;limit='.$booksets['count'].'&amp;order='.$order.'">'.get_string('alllists','artefact.bookset',$booksets['count']).'</a>');
 }

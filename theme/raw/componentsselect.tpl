@@ -14,12 +14,15 @@
 <h3 align="center"><a href="{$WWWROOT}artefact/bookset/index.php?id={$bookset}">{$artefacttitle|safe}</a></h3>
 {if $artefactdescription}
 	<table>
-	<tr><td><b>{str tag='description' section='artefact.bookset'}</b> {$artefactdescription|safe}</td>
+	<tr><td><b>{str tag='description' section='artefact.bookset'}</b> : {$artefactdescription|safe}</td>
 	{if $artefactstatus}
-		<td><b>{str tag='status' section='artefact.bookset'}</b> {$artefactstatus|safe}</td>
+		<td><b>{str tag='statusmodif' section='artefact.bookset'}</b> : {$artefactstatus|safe}</td>
 	{/if}
 	{if $artefactpublic}
-		<td><b>{str tag='public' section='artefact.bookset'}</b> {$artefactpublic|safe}'</td>
+		<td><b>{str tag='publicbookset' section='artefact.bookset'}</b> : {$artefactpublic|safe}</td>
+	{/if}
+	{if $artefactselect}
+		<td><b>{str tag='selectedbookset' section='artefact.bookset'}</b> : {$artefactselect|safe}</td>
 	{/if}
 	</tr>
 	</table>
@@ -48,10 +51,7 @@
 				<td>{$component->public|safe}</td>
 				<td>{$component->displayorder|safe}</td> 
 				<td class="buttonscell btns2 planscontrols" rowspan="2">  				
-					<a href="{$WWWROOT}artefact/bookset/edit/component.php?id={$component->id}" title="{str tag=edit}">
-						<img src="{theme_url filename='images/btn_edit.png'}" alt="{str(tag=editspecific arg1=$component->title)|escape:html|safe}">
-					</a>
-					<a href="{$WWWROOT}artefact/bookset/delete/component.php?id={$bookset}&componentid={$component->id}" title="{str tag=delete}">
+					<a href="{$WWWROOT}artefact/bookset/delete/component.php?id={$bookset}&amp;componentid={$component->id}" title="{str tag=delete}">
 						<img src="{theme_url filename='images/btn_deleteremove.png'}" alt="{str(tag=deletespecific arg1=$component->title)|escape:html|safe}">
 					</a>
 					<a href="{$WWWROOT}artefact/bookset/bookset.php?id={$bookset}&amp;componentid={$component->id}&amp;direction=1&amp;order={$strorder}&amp;offset=0&amp;limit=100" title="{str tag=movecomponentdown}">

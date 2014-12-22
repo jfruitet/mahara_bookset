@@ -63,10 +63,10 @@ $smarty->assign_by_ref('tags', $artefact->get('tags'));
 $smarty->assign_by_ref('owner', $artefact->get('owner'));
 
 $smarty->assign('artefacttitle', $artefact->get('title'));
-$smarty->assign('artefactdescription', $artefact->get('description'));
-$smarty->assign('artefactstatus', $artefact->get('status'));
-$smarty->assign('artefactpublic', $artefact->get('public'));
-
+$smarty->assign('artefactdescription', strip_tags($artefact->get('description')));
+$smarty->assign('artefactstatus', ($artefact->get('status') ? get_string('allowed','artefact.bookset') : get_string('forbidden','artefact.bookset')));
+$smarty->assign('artefactpublic', ($artefact->get('public') ? get_string('yes') : get_string('no')));
+$smarty->assign('artefactselect', ($artefact->get('select') ? get_string('yes') : get_string('no')));
 
 
 if ($limit<$components['count']){
