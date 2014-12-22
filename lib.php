@@ -79,24 +79,64 @@ class PluginArtefactBookset extends PluginArtefact {
 	}
 	
 	/**
-	This function return a list of submenues
+	 *   This function return a list of submenues
+	 *      This function use bookset components as new tabs
+
 	*/
     public static function submenu_items() {
-        $tabs = array(
-            'index' => array(
+        $tabs = array();
+        $tabs['index'] = array(
                 'page'  => 'index',
                 'url'   => 'artefact/bookset',
                 'title' => get_string('mybooksets', 'artefact.bookset'),
-            ),
-            'import' => array(
+            );
+		/*
+        $tabs['import'] = array(
                 'page'  => 'import',
                 'url'   => 'artefact/bookset/import.php',
                 'title' => get_string('import', 'artefact.bookset'),
-            ),
-        );
+            );
+		*/
+        if ($booksets = ArtefactTypeBookset::get_booksets()){
+				// DEBUG
+				//echo "<br />DEBUG :: lib.php :: 103 :: BOOKSET<br />\n";
+				//print_object($booksets);
+				//exit;
+			if (!empty($booksets['data'])){
+        		foreach ($booksets['data'] as $bookset){
+					// DEBUG
+					//echo "<br />DEBUG :: lib.php :: 103 :: BOOKSET<br />\n";
+					//print_object($bookset);
+					//exit;
+					if ($components = ArtefactTypeBookset::get_bookset_components_info($bookset->id)){
+						// DEBUG
+						//echo "<br />DEBUG :: lib.php :: 103 :: BOOKSET<br />\n";
+						//print_object($components);
+
+
+						foreach ($components as $component){
+							//DEBUG
+							//echo "<br />DEBUG :: lib.php :: 103 :: BOOKSET<br />\n";
+							//print_object($component);
+							$index = $component->tomeid;
+                        	$tabs[$index] = array(
+			                	'page'  => 'import',
+            			    	'url'   => 'artefact/bookset/dispatch.php?id='.$component->tomeid,
+			                	'title' => strip_tags($bookset->title.'::'.$component->title),
+            				);
+						}
+					}
+				}
+			}
+		}
+
         if (defined('BOOKSET_SUBPAGE') && isset($tabs[BOOKSET_SUBPAGE])) {
             $tabs[BOOKSET_SUBPAGE]['selected'] = true;
         }
+		//DEBUG
+		//echo "<br />DEBUG :: lib.php :: 139 :: TABS<br />\n";
+		//print_object($tabs);
+		//exit;
         return $tabs;
     }
 
@@ -913,6 +953,22 @@ class ArtefactTypeBookset extends ArtefactType {
 
         return $result;
     }
+
+   /**
+     * This function returns a list of the current bookset components.
+     *
+     * @return array (count: integer, data: array)
+     */
+    public static function get_bookset_components_info($booksetid) {
+		($results = get_records_sql_array(" SELECT ac.id as id, at.id as tomeid, at.title as title, at.status as status, at.public as public, a.id as artefactid, a.owner as owner
+				FROM {artefact_bookset_component} ac, {artefact_booklet_tome} at, {artefact} a
+				WHERE ac.booksetid = ? AND at.id = ac.tomeid AND a.id = at.artefact AND a.artefacttype = 'tome'
+				ORDER BY ac.displayorder ASC", array($booksetid)))
+				|| ($results = array());
+        return $results;
+    }
+
+
 
    /**
      * This function returns a current bookset component.

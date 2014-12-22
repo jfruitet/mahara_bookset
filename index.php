@@ -37,11 +37,13 @@ if (!PluginArtefactbooklet::is_active()) {
 
 $designer = get_record('artefact_booklet_designer', 'id', $USER->get('id'));
 // renvoit les designers d'id = user pour savoir si user est designer
+
 $tomes = get_records_array('artefact_booklet_tome', 'public', 1);
 // renvoit la liste des tomes publics
+
 $admin = get_record('usr', 'id', $USER->get('id'));
 
-/**********************
+/*
 if ($designer) {
     $modform = array(
         'name'        => 'modform',
@@ -60,7 +62,8 @@ if ($designer) {
     );
     $indexform['modform'] = pieform($modform);
 }
-*********/
+*/
+
 if ($admin->admin) {
     // si admin : formulaires de gestion des concepteurs
     $sql = "SELECT * FROM {usr}
@@ -122,6 +125,7 @@ if ($admin->admin) {
     $pf = '<fieldset class="pieform-fieldset"><legend>'. get_string('adminfield', 'artefact.booklet') . ' ' . $aide . '</legend>' . $adminform . $admindeleteform . '</fieldset>';
     $indexform['adminform'] = $pf;
 }
+
 // offset and limit for pagination
 $offset = param_integer('offset', 0);
 $limit  = param_integer('limit', 10);
@@ -142,12 +146,12 @@ $smarty = smarty(array('tablerenderer', 'paginator', 'jquery'));
 // $smarty->assign('PAGEHELPICON', $aide);
 $smarty->assign('PAGEHEADING', hsc(get_string("booksets", "artefact.bookset")));
 // $smarty->assign('help', $aide);
-$smarty->assign('indexform', $indexform);
-//$smarty->assign('choiceform', $choiceform);
 
-$smarty->assign('d', $designer);
-// $smarty->display('artefact:booklet:index.tpl');
-
+if (!empty($indexform)) {
+	$smarty->assign('indexform', $indexform);
+	//$smarty->assign('choiceform', $choiceform);
+	$smarty->assign('d', $designer);
+}
 
 $smarty->assign_by_ref('booksets', $booksets);
 if ($limit<$booksets['count']){
@@ -173,11 +177,21 @@ $smarty->assign('SUBPAGENAV', PluginArtefactBookset::submenu_items());
 $smarty->display('artefact:bookset:index.tpl');
 
 
-
+/**
+ * creation de booklet
+ *
+ *
+ */
 function modform_submit(Pieform $form, $values) {
     $goto = get_config('wwwroot').'/artefact/booklet/tomes.php';
     redirect($goto);
 }
+
+/**
+ * Selection du livrete actif
+ * Ceci n'a pas vraiment d'intérêt dans le contexte de bookset
+ *
+ */
 
 function choiceform_submit(Pieform $form, $values) {
     global $USER, $SESSION;
