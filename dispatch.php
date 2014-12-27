@@ -33,7 +33,7 @@ if (!empty($id)){
 			$rec = new stdClass();
 			$rec->idtome = $id;
 			$rec->iduser = $USER->get('id');
-			insert_into('artefact_booklet_selectedtome', $rec);
+			insert_record('artefact_booklet_selectedtome', $rec);
 		}		
 		else{
 			// Forcer le tome sélectionné
